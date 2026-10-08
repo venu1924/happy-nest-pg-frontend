@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-nest-soft font-sans text-nest-navy antialiased;
+    margin: 0;
+  }
+
+  #root {
+    min-height: 100dvh;
+  }
+
+  button,
+  a {
+    -webkit-touch-callout: none;
+  }
+}
+
+@layer utilities {
+  .animate-floor-in {
+    animation: floor-in 320ms ease-out;
+  }
+}
+
+@keyframes floor-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
