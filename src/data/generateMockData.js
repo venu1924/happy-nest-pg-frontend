@@ -185,6 +185,7 @@ export function generateMockData(options = {}) {
         sharingType,
         notes: '',
       };
+      resident.refundAmount = resident.depositRefundable ? monthlyRent : 0;
       residents.push(resident);
       bed.status = 'OCCUPIED';
       bed.residentId = id;
@@ -264,6 +265,7 @@ export function generateMockData(options = {}) {
       lastBedId: '108-A',
       monthlyRent: 9000,
       deposit: 9000,
+      refundAmount: 9000,
       depositRefundable: true,
       sharingType: 'DOUBLE',
       notes: 'Moved to another city',
@@ -278,6 +280,7 @@ export function generateMockData(options = {}) {
       lastBedId: '311-B',
       monthlyRent: 8000,
       deposit: 8000,
+      refundAmount: 8000,
       depositRefundable: true,
       sharingType: 'DOUBLE',
       notes: '',
@@ -292,6 +295,7 @@ export function generateMockData(options = {}) {
       lastBedId: '101-A',
       monthlyRent: 12000,
       deposit: 12000,
+      refundAmount: 0,
       depositRefundable: false,
       sharingType: 'SINGLE',
       notes: 'Completed internship',

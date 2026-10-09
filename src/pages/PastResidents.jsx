@@ -98,7 +98,10 @@ export default function PastResidents() {
               {r.deposit != null && r.deposit !== '' ? (
                 <p className="mt-2 text-xs text-nest-muted">
                   Deposit: {formatCurrency(r.deposit)}
-                  {r.depositRefundable === false ? ' · Non-refundable' : ' · Refundable'}
+                  {' · Refund: '}
+                  {formatCurrency(
+                    r.refundAmount ?? (r.depositRefundable === false ? 0 : r.deposit)
+                  )}
                 </p>
               ) : null}
               {r.deletionReason ? (

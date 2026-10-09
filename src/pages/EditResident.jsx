@@ -32,6 +32,7 @@ export default function EditResident() {
         joiningDate: payload.joiningDate,
         monthlyRent: payload.monthlyRent,
         deposit: payload.deposit,
+        refundAmount: payload.refundAmount,
         depositRefundable: payload.depositRefundable,
         notes: payload.notes,
       });
@@ -77,7 +78,10 @@ export default function EditResident() {
           roomNumber: String(resident.roomNumber),
           monthlyRent: String(resident.monthlyRent ?? ''),
           deposit: String(resident.deposit ?? 0),
-          depositRefundable: resident.depositRefundable !== false,
+          refundAmount: String(
+            resident.refundAmount ??
+              (resident.depositRefundable === false ? 0 : resident.deposit ?? 0)
+          ),
           sharingType: resident.sharingType || 'DOUBLE',
         }}
         onSubmit={handleSubmit}

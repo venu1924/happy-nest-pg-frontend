@@ -23,7 +23,7 @@ const emptyForm = {
   tripleMemberLimit: TRIPLE_MEMBER_LIMIT_THREE,
   monthlyRent: '',
   deposit: '',
-  depositRefundable: true,
+  refundAmount: '',
   notes: '',
 };
 
@@ -39,6 +39,9 @@ export default function ResidentForm({
   const [errors, setErrors] = useState({});
   const [rentTouched, setRentTouched] = useState(Boolean(initialValues?.monthlyRent));
   const [depositTouched, setDepositTouched] = useState(Boolean(initialValues?.deposit));
+  const [refundTouched, setRefundTouched] = useState(
+    initialValues?.refundAmount != null && initialValues?.refundAmount !== ''
+  );
 
   const rooms = useMemo(
     () => floors.flatMap((f) => f.rooms).sort((a, b) => a.roomNumber - b.roomNumber),
@@ -85,9 +88,10 @@ export default function ResidentForm({
       const next = { ...prev };
       if (!rentTouched) next.monthlyRent = rent;
       if (!depositTouched) next.deposit = next.monthlyRent || rent;
+      if (!refundTouched) next.refundAmount = next.deposit || next.monthlyRent || rent;
       return next;
     });
-  }, [selectedRoom, effectiveSharing, lockAssignment, rentTouched, depositTouched]);
+  }, [selectedRoom, effectiveSharing, lockAssignment, rentTouched, depositTouched, refundTouched]);
 
   useEffect(() => {
     if (lockAssignment) return;
@@ -103,10 +107,20 @@ export default function ResidentForm({
   const setField = (key, value) => {
     setErrors((prev) => ({ ...prev, [key]: undefined }));
     if (key === 'monthlyRent') setRentTouched(true);
-    if (key === 'deposit') setDepositTouched(true);
+    if (key === 'deposit') {
+      setDepositTouched(true);
+      setForm((prev) => {
+        const next = { ...prev, deposit: value };
+        if (!refundTouched) next.refundAmount = value;
+        return next;
+      });
+      return;
+    }
+    if (key === 'refundAmount') setRefundTouched(true);
     if (key === 'roomNumber') {
       setRentTouched(false);
       setDepositTouched(false);
+      setRefundTouched(false);
       setForm((prev) => ({
         ...prev,
         roomNumber: value,
@@ -140,6 +154,16 @@ export default function ResidentForm({
     if (form.deposit === '' || Number(form.deposit) < 0) {
       next.deposit = 'Enter deposit amount (0 if none).';
     }
+    if (form.refundAmount === '' || Number(form.refundAmount) < 0) {
+      next.refundAmount = 'Enter refund amount (0 if none).';
+    }
+    if (
+      form.refundAmount !== '' &&
+      form.deposit !== '' &&
+      Number(form.refundAmount) > Number(form.deposit)
+    ) {
+      next.refundAmount = 'Refund cannot be more than deposit.';
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -147,12 +171,15 @@ export default function ResidentForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validate()) return;
+    const deposit = Number(form.deposit) || 0;
+    const refundAmount = Number(form.refundAmount) || 0;
     onSubmit({
       ...form,
       roomNumber: Number(form.roomNumber),
       monthlyRent: Number(form.monthlyRent),
-      deposit: Number(form.deposit) || 0,
-      depositRefundable: form.depositRefundable !== false,
+      deposit,
+      refundAmount,
+      depositRefundable: refundAmount > 0,
       sharingType: effectiveSharing,
       tripleMemberLimit: effectiveTripleLimit,
     });
@@ -329,25 +356,18 @@ export default function ResidentForm({
         />
       </Field>
 
-      <div>
-        <span className="mb-1.5 block text-sm font-medium text-nest-navy">
-          Deposit refundable
-        </span>
-        <div className="grid grid-cols-2 gap-2">
-          <SharingOption
-            selected={form.depositRefundable !== false}
-            title="Refundable"
-            hint="Returned on leaving"
-            onClick={() => setField('depositRefundable', true)}
-          />
-          <SharingOption
-            selected={form.depositRefundable === false}
-            title="Non-refundable"
-            hint="Not returned"
-            onClick={() => setField('depositRefundable', false)}
-          />
-        </div>
-      </div>
+      <Field label="Refund amount (₹)" error={errors.refundAmount}>
+        <input
+          type="number"
+          min="0"
+          value={form.refundAmount}
+          onChange={(e) => setField('refundAmount', e.target.value)}
+          className={inputClass(errors.refundAmount)}
+          inputMode="numeric"
+          placeholder="Amount returned on leaving (0 if none)"
+        />
+        <p className="mt-1 text-xs text-nest-muted">Enter 0 if the deposit is not returned.</p>
+      </Field>
 
       <Field label="Notes (optional)">
         <textarea

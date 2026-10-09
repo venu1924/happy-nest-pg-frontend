@@ -205,7 +205,16 @@ export function mockAddResident(payload) {
     bedId: payload.bedId,
     monthlyRent: Number(payload.monthlyRent),
     deposit: Number(payload.deposit) || 0,
-    depositRefundable: payload.depositRefundable !== false,
+    refundAmount:
+      payload.refundAmount != null
+        ? Number(payload.refundAmount) || 0
+        : payload.depositRefundable === false
+          ? 0
+          : Number(payload.deposit) || 0,
+    depositRefundable:
+      payload.refundAmount != null
+        ? Number(payload.refundAmount) > 0
+        : payload.depositRefundable !== false,
     sharingType,
     notes: payload.notes?.trim() ?? '',
   };
@@ -238,8 +247,14 @@ export function mockUpdateResident(id, updates) {
   if (updates.joiningDate != null) resident.joiningDate = updates.joiningDate;
   if (updates.monthlyRent != null) resident.monthlyRent = Number(updates.monthlyRent);
   if (updates.deposit != null) resident.deposit = Number(updates.deposit) || 0;
-  if (updates.depositRefundable != null) {
+  if (updates.refundAmount != null) {
+    resident.refundAmount = Number(updates.refundAmount) || 0;
+    resident.depositRefundable = resident.refundAmount > 0;
+  } else if (updates.depositRefundable != null) {
     resident.depositRefundable = updates.depositRefundable !== false;
+    if (resident.refundAmount == null) {
+      resident.refundAmount = resident.depositRefundable ? resident.deposit ?? 0 : 0;
+    }
   }
   if (updates.notes != null) resident.notes = updates.notes;
 
@@ -268,6 +283,9 @@ export function mockDeleteResident(id, payload = {}) {
     lastBedId: resident.bedId,
     monthlyRent: resident.monthlyRent,
     deposit: resident.deposit ?? 0,
+    refundAmount:
+      resident.refundAmount ??
+      (resident.depositRefundable === false ? 0 : resident.deposit ?? 0),
     depositRefundable: resident.depositRefundable !== false,
     sharingType: resident.sharingType ?? null,
     notes: resident.notes ?? '',

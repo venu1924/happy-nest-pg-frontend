@@ -140,12 +140,11 @@ export default function ResidentDetails() {
             value={formatCurrency(resident.deposit ?? 0)}
           />
           <Row
-            label="Refundable"
-            value={
-              resident.depositRefundable === false
-                ? 'No — non-refundable'
-                : `Yes — ${formatCurrency(resident.deposit ?? 0)}`
-            }
+            label="Refund amount"
+            value={formatCurrency(
+              resident.refundAmount ??
+                (resident.depositRefundable === false ? 0 : resident.deposit ?? 0)
+            )}
           />
           <Row
             label="Sharing"
