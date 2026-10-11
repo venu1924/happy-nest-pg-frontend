@@ -82,7 +82,7 @@ export default function Login() {
             disabled={busy}
             className="mt-5 flex min-h-12 w-full items-center justify-center rounded-xl bg-nest-navy text-sm font-semibold text-white disabled:opacity-60"
           >
-            {busy ? 'Signing in...' : 'Sign in'}
+            {busy ? 'Signing in (may take up to a minute)...' : 'Sign in'}
           </button>
         </form>
       </div>

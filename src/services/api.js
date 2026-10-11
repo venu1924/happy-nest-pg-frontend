@@ -18,7 +18,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000,
+  // Render free tier can take 30–60s to wake from sleep
+  timeout: 60000,
 });
 
 api.interceptors.request.use((config) => {
@@ -41,10 +42,14 @@ api.interceptors.response.use(
         }
       }
     }
-    const message =
+    let message =
       error.response?.data?.message ||
       error.message ||
       'Something went wrong. Please try again.';
+    if (error.code === 'ECONNABORTED' || /timeout/i.test(String(message))) {
+      message =
+        'Server is waking up (free hosting). Wait about a minute and try Sign in again.';
+    }
     return Promise.reject(new Error(message));
   }
 );
