@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/residents', label: 'Residents' },
   { to: '/rooms', label: 'Rooms' },
   { to: '/payments', label: 'Payments' },
+  { to: '/temporary', label: 'Temporary' },
 ];
 
 function NavItem({ to, label, end, onClick }) {

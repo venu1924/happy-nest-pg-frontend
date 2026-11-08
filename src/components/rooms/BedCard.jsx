@@ -5,12 +5,14 @@ import StatusBadge from '../common/StatusBadge';
 export default function BedCard({
   bed,
   resident,
+  temporary,
   roomNumber,
   singleSharingTwoBed = false,
   tripleTwoMember = false,
 }) {
   const occupied = bed.status === 'OCCUPIED';
   const blocked = bed.status === 'BLOCKED';
+  const isTemporary = bed.occupantType === 'TEMPORARY' || Boolean(temporary);
 
   return (
     <div className="rounded-2xl border border-nest-line bg-white p-4 shadow-soft">
@@ -23,7 +25,18 @@ export default function BedCard({
         </StatusBadge>
       </div>
 
-      {occupied && resident ? (
+      {occupied && isTemporary ? (
+        <Link
+          to={temporary ? `/temporary/${temporary.id}` : '/temporary'}
+          className="mt-3 block rounded-xl bg-blue-50 px-3 py-3 transition hover:bg-blue-100"
+        >
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Temporary stay</p>
+          <p className="mt-1 text-sm font-medium text-nest-navy">{temporary?.name || 'Temporary resident'}</p>
+          <p className="mt-0.5 text-xs text-nest-muted">
+            {temporary?.paymentStatus === 'PAID' ? 'Paid' : 'Unpaid'}
+          </p>
+        </Link>
+      ) : occupied && resident ? (
         <Link
           to={`/residents/${resident.id}`}
           className="mt-3 block rounded-xl bg-nest-soft px-3 py-3 transition hover:bg-slate-100"

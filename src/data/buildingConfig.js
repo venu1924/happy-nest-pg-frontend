@@ -53,6 +53,7 @@ export const DEFAULT_MONTHLY_RENT = {
 /** How a TWO_BED room is currently used */
 export const OCCUPANCY_DOUBLE = 'DOUBLE';
 export const OCCUPANCY_SINGLE = 'SINGLE';
+export const OCCUPANCY_TRIPLE = 'TRIPLE';
 
 /** Triple room (…12): max residents when opted for 2-only vs up to 3 */
 export const TRIPLE_MEMBER_LIMIT_TWO = 2;
@@ -61,11 +62,15 @@ export const TRIPLE_MEMBER_LIMIT_THREE = 3;
 export const SHARING_LABELS = {
   DOUBLE: 'Double sharing',
   SINGLE: 'Single sharing',
+  TRIPLE: 'Triple sharing',
 };
 
 export function defaultRentForAssignment(roomType, sharingType) {
   if (roomType === 'TWO_BED' && sharingType === 'SINGLE') {
     return DEFAULT_MONTHLY_RENT.TWO_BED_AS_SINGLE;
+  }
+  if (roomType === 'TWO_BED' && sharingType === 'TRIPLE') {
+    return DEFAULT_MONTHLY_RENT.THREE_BED;
   }
   return DEFAULT_MONTHLY_RENT[roomType] ?? 0;
 }

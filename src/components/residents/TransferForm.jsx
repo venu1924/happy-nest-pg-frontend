@@ -3,7 +3,10 @@ import {
   getVacantBeds,
   getRoomTypeLabel,
   canOfferSingleSharing,
+  canOfferTripleOnTwoBed,
   canChooseTripleMemberLimit,
+  countOccupiedBeds,
+  bedsForAssignment,
 } from '../../utils/roomUtils';
 import { TRIPLE_MEMBER_LIMIT_TWO, TRIPLE_MEMBER_LIMIT_THREE } from '../../data/buildingConfig';
 
@@ -31,7 +34,11 @@ export default function TransferForm({
 
   const rooms = useMemo(() => {
     if (!floor) return [];
-    return floor.rooms.filter((r) => getVacantBeds(r).length > 0);
+    return floor.rooms.filter(
+      (r) =>
+        getVacantBeds(r).length > 0 ||
+        (canOfferTripleOnTwoBed(r) && countOccupiedBeds(r) >= 2)
+    );
   }, [floor]);
 
   const selectedRoom = useMemo(
@@ -39,12 +46,12 @@ export default function TransferForm({
     [rooms, roomNumber]
   );
 
-  const vacantBeds = useMemo(
-    () => (selectedRoom ? getVacantBeds(selectedRoom) : []),
-    [selectedRoom]
-  );
-
-  const showSharingChoice = selectedRoom && canOfferSingleSharing(selectedRoom);
+  const offerSingle = selectedRoom && canOfferSingleSharing(selectedRoom);
+  const offerTriple =
+    selectedRoom &&
+    canOfferTripleOnTwoBed(selectedRoom) &&
+    selectedRoom.occupancyMode !== 'TRIPLE';
+  const showSharingChoice = Boolean(offerSingle || offerTriple);
   const showTripleMemberChoice =
     selectedRoom && canChooseTripleMemberLimit(selectedRoom);
   const effectiveTripleLimit = showTripleMemberChoice
@@ -57,9 +64,22 @@ export default function TransferForm({
 
   const effectiveSharing = selectedRoom?.type === 'SINGLE_BED'
     ? 'SINGLE'
-    : showSharingChoice
-      ? sharingType
-      : 'DOUBLE';
+    : selectedRoom?.type === 'TWO_BED' && selectedRoom?.occupancyMode === 'TRIPLE'
+      ? 'TRIPLE'
+      : showSharingChoice
+        ? sharingType === 'SINGLE' && offerSingle
+          ? 'SINGLE'
+          : sharingType === 'TRIPLE' && offerTriple
+            ? 'TRIPLE'
+            : 'DOUBLE'
+        : selectedRoom?.type === 'THREE_BED'
+          ? 'TRIPLE'
+          : 'DOUBLE';
+
+  const vacantBeds = useMemo(
+    () => (selectedRoom ? bedsForAssignment(selectedRoom, effectiveSharing) : []),
+    [selectedRoom, effectiveSharing]
+  );
 
   useEffect(() => {
     if (effectiveSharing === 'SINGLE' && vacantBeds[0]) {
@@ -179,7 +199,7 @@ export default function TransferForm({
       {showSharingChoice && (
         <div>
           <span className="mb-1.5 block text-sm font-medium">Sharing in new room</span>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button
               type="button"
               onClick={() => setSharingType('DOUBLE')}
@@ -191,17 +211,32 @@ export default function TransferForm({
             >
               Double sharing
             </button>
-            <button
-              type="button"
-              onClick={() => setSharingType('SINGLE')}
-              className={`min-h-12 rounded-xl border px-3 py-2 text-left text-sm font-semibold ${
-                effectiveSharing === 'SINGLE'
-                  ? 'border-nest-navy bg-nest-navy text-white'
-                  : 'border-nest-line bg-white text-nest-navy'
-              }`}
-            >
-              Single sharing
-            </button>
+            {offerTriple && (
+              <button
+                type="button"
+                onClick={() => setSharingType('TRIPLE')}
+                className={`min-h-12 rounded-xl border px-3 py-2 text-left text-sm font-semibold ${
+                  effectiveSharing === 'TRIPLE'
+                    ? 'border-nest-navy bg-nest-navy text-white'
+                    : 'border-nest-line bg-white text-nest-navy'
+                }`}
+              >
+                Triple sharing
+              </button>
+            )}
+            {offerSingle && (
+              <button
+                type="button"
+                onClick={() => setSharingType('SINGLE')}
+                className={`min-h-12 rounded-xl border px-3 py-2 text-left text-sm font-semibold ${
+                  effectiveSharing === 'SINGLE'
+                    ? 'border-nest-navy bg-nest-navy text-white'
+                    : 'border-nest-line bg-white text-nest-navy'
+                }`}
+              >
+                Single sharing
+              </button>
+            )}
           </div>
           {effectiveSharing === 'SINGLE' && (
             <p className="mt-1.5 text-xs text-nest-muted">

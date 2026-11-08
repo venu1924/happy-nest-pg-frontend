@@ -16,6 +16,9 @@ import TransferResident from '../pages/TransferResident';
 import Transfers from '../pages/Transfers';
 import Payments from '../pages/Payments';
 import Profile from '../pages/Profile';
+import AddTemporaryResident from '../pages/AddTemporaryResident';
+import TemporaryResidents from '../pages/TemporaryResidents';
+import TemporaryResidentDetails from '../pages/TemporaryResidentDetails';
 
 function ProtectedApp() {
   return (
@@ -45,6 +48,9 @@ export default function AppRoutes() {
         <Route path="rooms/:roomNumber" element={<RoomDetails />} />
         <Route path="transfers" element={<Transfers />} />
         <Route path="payments" element={<Payments />} />
+        <Route path="temporary" element={<TemporaryResidents />} />
+        <Route path="temporary/new" element={<AddTemporaryResident />} />
+        <Route path="temporary/:id" element={<TemporaryResidentDetails />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

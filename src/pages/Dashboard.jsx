@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRightLeft } from 'lucide-react';
+import { stayCountdown } from '../utils/stayUtils';
 import DashboardCard from '../components/dashboard/DashboardCard';
 import PaymentSummary from '../components/dashboard/PaymentSummary';
 import QuickActions from '../components/dashboard/QuickActions';
@@ -53,11 +54,23 @@ export default function Dashboard() {
         <p className="mt-1 text-sm text-nest-muted">Here&apos;s what&apos;s happening in your PG.</p>
       </header>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <DashboardCard label="Residents" value={stats.totalResidents} />
-        <DashboardCard label="Rooms" value={stats.totalRooms} />
-        <DashboardCard label="Vacant Beds" value={stats.vacantBeds} />
-        <DashboardCard label="Pending Payments" value={stats.pendingPayments} />
+      <div className="grid grid-cols-2 gap-3">
+        <DashboardCard label="Residents" value={stats.totalResidents} hint="Monthly stays only" />
+        <DashboardCard
+          label="Temporary residents"
+          value={stats.temporaryResidents ?? 0}
+          hint="Few-day stays"
+        />
+        <DashboardCard
+          label="Vacant beds"
+          value={stats.vacantBeds}
+          hint="Ignores temporary stays"
+        />
+        <DashboardCard
+          label="Vacant beds (P+T)"
+          value={stats.vacantBedsPT ?? stats.vacantBeds}
+          hint="Monthly and temporary"
+        />
       </div>
 
       <PaymentSummary
@@ -65,7 +78,39 @@ export default function Dashboard() {
         year={paymentSummary.year}
         paid={paymentSummary.paid}
         pending={paymentSummary.pending}
+        temporaryUnpaid={paymentSummary.temporaryUnpaid ?? 0}
       />
+
+      <section>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-base font-semibold text-nest-navy">Temporary residents</h2>
+          <Link to="/temporary" className="text-sm font-medium text-blue-700">
+            View all
+          </Link>
+        </div>
+        {(stats.temporaryStayAlerts || []).length === 0 ? (
+          <p className="mt-2 text-sm text-nest-muted">No temporary stays right now.</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {stats.temporaryStayAlerts.map((stay) => (
+              <li key={stay.id}>
+                <Link
+                  to={`/temporary/${stay.id}`}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white px-4 py-3 shadow-soft"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold text-nest-navy">{stay.name}</span>
+                    <span className="mt-0.5 block text-xs text-nest-muted">
+                      Room {stay.roomNumber} · Temporary stay
+                    </span>
+                  </span>
+                  <span className="text-sm font-medium text-blue-700">{stayCountdown(stay)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <QuickActions />
 

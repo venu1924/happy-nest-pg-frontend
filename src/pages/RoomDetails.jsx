@@ -19,7 +19,7 @@ import {
 export default function RoomDetails() {
   const { roomNumber } = useParams();
   const { getRoom, loading, error } = useRooms();
-  const { residents } = useApp();
+  const { residents, temporaryResidents } = useApp();
   const room = getRoom(roomNumber);
 
   if (loading) return <LoadingState message="Loading room..." />;
@@ -79,10 +79,15 @@ export default function RoomDetails() {
             2 residents are staying.
           </p>
         )}
+        {room.type === 'TWO_BED' && room.occupancyMode === 'TRIPLE' && (
+          <p className="mt-2 text-sm text-nest-muted">
+            This double room is being used as triple sharing — up to 3 people.
+          </p>
+        )}
         {room.type === 'TWO_BED' && occupied === 0 && vacant > 0 && (
           <div className="mt-3">
             <p className="text-sm text-nest-muted">
-              This room can be double sharing (one bed each) or single sharing
+              This room can be double sharing, triple sharing (3 people), or single sharing
               (both beds to one person).
             </p>
             <Link
@@ -99,11 +104,13 @@ export default function RoomDetails() {
         <h2 className="font-display text-base font-semibold text-nest-navy">Beds</h2>
         {room.beds.map((bed) => {
           const resident = residents.find((r) => r.id === bed.residentId);
+          const temporary = (temporaryResidents || []).find((t) => t.id === bed.residentId);
           return (
             <BedCard
               key={bed.bedId}
               bed={bed}
               resident={resident}
+              temporary={temporary}
               roomNumber={room.roomNumber}
               singleSharingTwoBed={singleSharingTwoBed}
               tripleTwoMember={isTripleTwoMemberRoom(room)}

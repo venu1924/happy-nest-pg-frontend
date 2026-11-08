@@ -1,4 +1,4 @@
-import { getRoomStatus, roomStatusClasses } from '../../utils/roomUtils';
+import { getRoomStatus, roomHasTemporary, roomStatusClasses } from '../../utils/roomUtils';
 import { formatFloorSeriesLabel, formatRoomRangeForFloor } from '../../data/buildingConfig';
 
 /**
@@ -47,7 +47,9 @@ export default function FloorBlock({
         {statusDots.map((status, idx) => (
           <span
             key={`${floorNumber}-${idx}`}
-            className={`h-2 w-2 rounded-sm ${roomStatusClasses(status).dot}`}
+            className={`h-2 w-2 rounded-sm ${
+              roomHasTemporary(rooms[idx]) ? 'bg-blue-600' : roomStatusClasses(status).dot
+            }`}
             title={status}
           />
         ))}

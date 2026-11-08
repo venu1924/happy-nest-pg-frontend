@@ -71,6 +71,9 @@ export default function BuildingView({ floorSummaries }) {
         <span className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm bg-slate-300" /> Vacant
         </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm bg-blue-600" /> Temporary stay
+        </span>
       </div>
     </div>
   );

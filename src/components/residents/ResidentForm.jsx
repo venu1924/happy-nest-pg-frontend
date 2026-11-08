@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isValidPhone } from '../../utils/formatters';
 import {
-  getVacantBeds,
   getRoomTypeLabel,
   canOfferSingleSharing,
+  canOfferTripleOnTwoBed,
   canChooseTripleMemberLimit,
   countOccupiedBeds,
+  bedsForAssignment,
 } from '../../utils/roomUtils';
 import {
   defaultRentForAssignment,
@@ -53,13 +54,14 @@ export default function ResidentForm({
     [rooms, form.roomNumber]
   );
 
-  const vacantBeds = useMemo(
-    () => (selectedRoom ? getVacantBeds(selectedRoom) : []),
-    [selectedRoom]
-  );
+  const offerSingle = !lockAssignment && selectedRoom && canOfferSingleSharing(selectedRoom);
+  const offerTriple =
+    !lockAssignment &&
+    selectedRoom &&
+    canOfferTripleOnTwoBed(selectedRoom) &&
+    selectedRoom.occupancyMode !== 'TRIPLE';
 
-  const showSharingChoice =
-    !lockAssignment && selectedRoom && canOfferSingleSharing(selectedRoom);
+  const showSharingChoice = Boolean(offerSingle || offerTriple);
 
   const showTripleMemberChoice =
     !lockAssignment && selectedRoom && canChooseTripleMemberLimit(selectedRoom);
@@ -77,9 +79,22 @@ export default function ResidentForm({
     if (lockAssignment) return initialValues?.sharingType || 'DOUBLE';
     if (!selectedRoom) return form.sharingType;
     if (selectedRoom.type === 'SINGLE_BED') return 'SINGLE';
-    if (showSharingChoice) return form.sharingType === 'SINGLE' ? 'SINGLE' : 'DOUBLE';
+    if (selectedRoom.type === 'TWO_BED' && selectedRoom.occupancyMode === 'TRIPLE') return 'TRIPLE';
+    if (showSharingChoice) {
+      if (form.sharingType === 'SINGLE' && offerSingle) return 'SINGLE';
+      if (form.sharingType === 'TRIPLE' && (offerTriple || selectedRoom.occupancyMode === 'TRIPLE')) {
+        return 'TRIPLE';
+      }
+      return 'DOUBLE';
+    }
+    if (selectedRoom.type === 'THREE_BED') return 'TRIPLE';
     return 'DOUBLE';
-  }, [lockAssignment, initialValues, selectedRoom, showSharingChoice, form.sharingType]);
+  }, [lockAssignment, initialValues, selectedRoom, showSharingChoice, offerSingle, offerTriple, form.sharingType]);
+
+  const vacantBeds = useMemo(
+    () => (selectedRoom ? bedsForAssignment(selectedRoom, effectiveSharing) : []),
+    [selectedRoom, effectiveSharing]
+  );
 
   useEffect(() => {
     if (lockAssignment || !selectedRoom) return;
@@ -224,7 +239,9 @@ export default function ResidentForm({
           <p className="mt-1 text-xs text-nest-muted">
             {effectiveSharing === 'SINGLE'
               ? 'Single sharing · both beds in this room'
-              : 'Double sharing'}{' '}
+              : effectiveSharing === 'TRIPLE'
+                ? 'Triple sharing'
+                : 'Double sharing'}{' '}
             · use Transfer Room to change assignment.
           </p>
         </div>
@@ -283,24 +300,39 @@ export default function ResidentForm({
 
           {showSharingChoice && (
             <Field label="How is this room given?" error={errors.sharingType}>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <SharingOption
                   selected={effectiveSharing === 'DOUBLE'}
                   title="Double sharing"
-                  hint="One bed only · can add roommate"
+                  hint="One bed · up to 2 people"
                   onClick={() => setField('sharingType', 'DOUBLE')}
                 />
-                <SharingOption
-                  selected={effectiveSharing === 'SINGLE'}
-                  title="Single sharing"
-                  hint="Both beds to this person"
-                  onClick={() => setField('sharingType', 'SINGLE')}
-                />
+                {offerTriple && (
+                  <SharingOption
+                    selected={effectiveSharing === 'TRIPLE'}
+                    title="Triple sharing"
+                    hint="Up to 3 people · adds Bed C"
+                    onClick={() => setField('sharingType', 'TRIPLE')}
+                  />
+                )}
+                {offerSingle && (
+                  <SharingOption
+                    selected={effectiveSharing === 'SINGLE'}
+                    title="Single sharing"
+                    hint="Both beds to this person"
+                    onClick={() => setField('sharingType', 'SINGLE')}
+                  />
+                )}
               </div>
               {effectiveSharing === 'SINGLE' && (
                 <p className="mt-1.5 text-xs text-nest-muted">
                   Guest prefers the whole 2-bed room: Bed A and Bed B both go to this resident.
                   (For a 1-bed room, use …01 rooms such as 101, 201.)
+                </p>
+              )}
+              {effectiveSharing === 'TRIPLE' && (
+                <p className="mt-1.5 text-xs text-nest-muted">
+                  This double room will be used for 3 people. Bed C is added if it is not there yet.
                 </p>
               )}
             </Field>

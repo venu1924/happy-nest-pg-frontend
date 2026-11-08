@@ -1,6 +1,7 @@
+import { Link } from 'react-router-dom';
 import { formatMonthYear } from '../../utils/formatters';
 
-export default function PaymentSummary({ month, year, paid, pending }) {
+export default function PaymentSummary({ month, year, paid, pending, temporaryUnpaid = 0 }) {
   const total = paid + pending;
   const pct = total === 0 ? 0 : Math.round((paid / total) * 100);
 
@@ -39,8 +40,13 @@ export default function PaymentSummary({ month, year, paid, pending }) {
       </div>
 
       <p className="mt-3 text-xs text-nest-muted">
-        Record keeping only — payments are collected outside the app (Cash / UPI / Card).
+        Monthly residents only. Payments are collected outside the app (Cash / UPI / Card).
       </p>
+      {temporaryUnpaid > 0 && (
+        <Link to="/payments?status=UNPAID_T" className="mt-2 block text-sm font-medium text-blue-700">
+          {temporaryUnpaid} temporary stay {temporaryUnpaid === 1 ? 'person has' : 'people have'} not paid
+        </Link>
+      )}
     </section>
   );
 }

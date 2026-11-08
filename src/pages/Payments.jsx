@@ -1,17 +1,21 @@
 import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import PaymentCard from '../components/payments/PaymentCard';
 import SearchBar from '../components/common/SearchBar';
 import LoadingState from '../components/common/LoadingState';
 import ErrorState from '../components/common/ErrorState';
 import EmptyState from '../components/common/EmptyState';
 import { usePayments } from '../hooks/usePayments';
-import { formatMonthYear, monthName } from '../utils/formatters';
+import { useApp } from '../context/AppContext';
+import { formatCurrency, formatMonthYear, monthName } from '../utils/formatters';
+import { stayCountdown } from '../utils/stayUtils';
 
 const FILTERS = [
   { id: 'ALL', label: 'All' },
   { id: 'PAID', label: 'Paid' },
   { id: 'PENDING', label: 'Pending' },
+  { id: 'PAID_T', label: 'Paid (T)' },
+  { id: 'UNPAID_T', label: 'Unpaid (T)' },
 ];
 
 export default function Payments() {
@@ -32,10 +36,17 @@ export default function Payments() {
     reload,
     markPaid,
   } = usePayments();
+  const { temporaryResidents } = useApp();
+  const showingTemp = status === 'PAID_T' || status === 'UNPAID_T';
+  const tempList = (temporaryResidents || []).filter((t) =>
+    status === 'PAID_T' ? t.paymentStatus === 'PAID' : t.paymentStatus !== 'PAID'
+  );
 
   useEffect(() => {
     const initial = searchParams.get('status');
-    if (initial === 'PAID' || initial === 'PENDING') setStatus(initial);
+    if (initial === 'PAID' || initial === 'PENDING' || initial === 'PAID_T' || initial === 'UNPAID_T') {
+      setStatus(initial);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -57,7 +68,7 @@ export default function Payments() {
       <header>
         <h1 className="font-display text-2xl font-semibold text-nest-navy">Payments</h1>
         <p className="mt-1 text-sm text-nest-muted">
-          Record keeping only · Cash / UPI / Card collected outside the app
+          Pending and paid lists are monthly residents. Paid (T) and Unpaid (T) are temporary stays.
         </p>
       </header>
 
@@ -115,7 +126,25 @@ export default function Payments() {
         ))}
       </div>
 
-      {loading ? (
+      {showingTemp ? (
+        tempList.length === 0 ? (
+          <EmptyState title="No temporary payments." description="Nothing in this temporary filter." />
+        ) : (
+          <ul className="space-y-3">
+            {tempList.map((stay) => (
+              <li key={stay.id}>
+                <Link to={`/temporary/${stay.id}`} className="block rounded-2xl border border-blue-100 bg-white p-4 shadow-soft">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Temporary stay</p>
+                  <p className="mt-1 font-medium text-nest-navy">{stay.name}</p>
+                  <p className="mt-1 text-sm text-nest-muted">
+                    Room {stay.roomNumber} · {stayCountdown(stay)} · {formatCurrency(stay.amount)}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : loading ? (
         <LoadingState message="Loading payments..." />
       ) : error ? (
         <ErrorState message={error} onRetry={reload} />

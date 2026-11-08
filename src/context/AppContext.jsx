@@ -7,6 +7,7 @@ import * as roomService from '../services/roomService';
 import * as paymentService from '../services/paymentService';
 import * as transferService from '../services/transferService';
 import * as dashboardService from '../services/dashboardService';
+import * as temporaryResidentService from '../services/temporaryResidentService';
 
 const AppContext = createContext(null);
 
@@ -14,6 +15,7 @@ export function AppProvider({ children }) {
   const { admin: authAdmin } = useAuth();
   const [floors, setFloors] = useState([]);
   const [residents, setResidents] = useState([]);
+  const [temporaryResidents, setTemporaryResidents] = useState([]);
   const [admin, setAdmin] = useState(
     authAdmin || { name: 'Admin', role: 'Administrator' }
   );
@@ -25,13 +27,15 @@ export function AppProvider({ children }) {
     if (!silent) setLoading(true);
     setError(null);
     try {
-      const [floorsData, residentsData, adminData] = await Promise.all([
+      const [floorsData, residentsData, adminData, temporaryData] = await Promise.all([
         roomService.getFloors(),
         residentService.getResidents(),
         dashboardService.getCurrentAdmin(),
+        temporaryResidentService.getTemporaryResidents(),
       ]);
       setFloors(floorsData);
       setResidents(residentsData);
+      setTemporaryResidents(temporaryData || []);
       setAdmin(adminData || authAdmin);
     } catch (err) {
       setError(err.message || 'Unable to load application data.');
@@ -61,6 +65,7 @@ export function AppProvider({ children }) {
     () => ({
       floors,
       residents,
+      temporaryResidents,
       admin: admin || authAdmin,
       loading,
       error,
@@ -73,7 +78,7 @@ export function AppProvider({ children }) {
         dashboard: dashboardService,
       },
     }),
-    [floors, residents, admin, authAdmin, loading, error, refresh]
+    [floors, residents, temporaryResidents, admin, authAdmin, loading, error, refresh]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

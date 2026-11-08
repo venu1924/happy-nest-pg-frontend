@@ -94,8 +94,9 @@ export function getRoomTypeLabel(typeOrRoom) {
       ? typeOrRoom
       : typeOrRoom?.type ?? getRoomType(parseSequenceFromRoomNumber(typeOrRoom?.roomNumber));
   const base = ROOM_TYPE_LABELS[type] ?? type;
-  if (typeof typeOrRoom === 'object' && typeOrRoom?.occupancyMode === 'SINGLE' && type === 'TWO_BED') {
-    return '2-Bed · Single sharing';
+  if (typeof typeOrRoom === 'object' && type === 'TWO_BED') {
+    if (typeOrRoom?.occupancyMode === 'SINGLE') return '2-Bed · Single sharing';
+    if (typeOrRoom?.occupancyMode === 'TRIPLE') return '2-Bed · Triple sharing';
   }
   return base;
 }
@@ -103,6 +104,7 @@ export function getRoomTypeLabel(typeOrRoom) {
 export function getSharingLabel(sharingType) {
   if (sharingType === 'SINGLE') return 'Single sharing';
   if (sharingType === 'DOUBLE') return 'Double sharing';
+  if (sharingType === 'TRIPLE') return 'Triple sharing';
   return null;
 }
 
@@ -123,6 +125,62 @@ export function formatResidentBeds(resident, room) {
 
 export function getVacantBeds(room) {
   return (room?.beds ?? []).filter((b) => b.status === 'VACANT');
+}
+
+/** 2-bed rooms (x02–x11) can be opened as triple sharing, adding Bed C. */
+export function canOfferTripleOnTwoBed(room) {
+  if (!room || room.type !== 'TWO_BED') return false;
+  if (room.occupancyMode === 'SINGLE') return false;
+  return countOccupiedBeds(room) < 3;
+}
+
+/** Vacant beds, plus Bed C when a 2-bed room is being used as triple and C is not created yet. */
+export function bedsForAssignment(room, sharingType) {
+  const vacant = getVacantBeds(room);
+  if (
+    sharingType === 'TRIPLE' &&
+    room?.type === 'TWO_BED' &&
+    !(room.beds ?? []).some((b) => b.bedLabel === 'C')
+  ) {
+    return [
+      ...vacant,
+      { bedId: `${room.roomNumber}-C`, bedLabel: 'C', status: 'VACANT' },
+    ];
+  }
+  return vacant;
+}
+
+export function countBedsByOccupant(room, occupantType) {
+  return (room?.beds ?? []).filter(
+    (b) => b.status === 'OCCUPIED' && b.occupantType === occupantType
+  ).length;
+}
+
+export function roomHasTemporary(room) {
+  return countBedsByOccupant(room, 'TEMPORARY') > 0;
+}
+
+/**
+ * Equal color slices for occupied/vacant beds when a temporary stay is in the room.
+ * Green = monthly, blue = temporary, slate = vacant.
+ */
+export function roomStayGradient(room) {
+  if (!roomHasTemporary(room)) return null;
+  const beds = (room.beds ?? []).filter((b) => b.status !== 'BLOCKED');
+  if (beds.length === 0) return null;
+  const color = (bed) => {
+    if (bed.status !== 'OCCUPIED') return '#e2e8f0';
+    return bed.occupantType === 'TEMPORARY' ? '#2563eb' : '#059669';
+  };
+  const stops = beds
+    .map((bed, i) => {
+      const start = (i / beds.length) * 100;
+      const end = ((i + 1) / beds.length) * 100;
+      const c = color(bed);
+      return `${c} ${start}% ${end}%`;
+    })
+    .join(', ');
+  return `linear-gradient(to right, ${stops})`;
 }
 
 export function findBed(room, bedId) {
