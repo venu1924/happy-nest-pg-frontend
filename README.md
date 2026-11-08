@@ -1,9 +1,9 @@
-# Happy Nest PG Management — Frontend (Phase 1)
+# Happy Nest PG Management — Frontend
 
-Mobile-first React app for managing a real monthly-stay PG.  
-Runs entirely on **mock data** — no Spring Boot / PostgreSQL required yet.
+Mobile-first React app for a real PG. The live site talks to the Spring Boot API. Local mock mode is only for development.
 
-**Project location:** `C:\Users\duggi\happy-nest-pg`
+**Live app:** https://happy-nest-pg-frontend.vercel.app  
+**Project folder:** `C:\Users\duggi\happy-nest-pg-frontend`
 
 ---
 
@@ -11,7 +11,7 @@ Runs entirely on **mock data** — no Spring Boot / PostgreSQL required yet.
 
 1. Open VS Code
 2. **File → Open Folder…**
-3. Select: `C:\Users\duggi\happy-nest-pg`
+3. Select: `C:\Users\duggi\happy-nest-pg-frontend`
 4. Open the integrated terminal (`Ctrl + `` `)
 5. Run:
 
@@ -147,7 +147,10 @@ happy-nest-pg/
 | `/rooms` | Building view |
 | `/rooms/floor/:floorNumber` | Floor view |
 | `/rooms/:roomNumber` | Room details |
-| `/payments` | Payments |
+| `/payments` | Monthly payments, plus Paid (T) and Unpaid (T) |
+| `/temporary` | Temporary (few-day) residents |
+| `/temporary/new` | Add a temporary resident |
+| `/temporary/:id` | Temporary stay details, payment, extend days |
 | `/transfers` | Transfer history |
 | `/profile` | Admin profile UI |
 
@@ -159,9 +162,33 @@ happy-nest-pg/
 - 12 rooms per floor → **60 rooms**
 - Per floor: 10×2-bed + 1×3-bed + 1×1-bed → **24 beds/floor** → **120 beds**
 - Room numbers: `101–112`, `201–212`, … `501–512`
-- Room types: `x01` single (1 bed), `x02–x11` double sharing (2 beds), `x12` triple sharing (3 beds; up to 3 residents, or **2-only** option where Bed C is not used and room is **full at 2**)
+- Room types: `x01` single (1 bed). `x02–x11` start as double sharing (2 beds) and can be given as **single** (both beds, one person) or **triple** (Bed C is added, up to 3 people). `x12` is triple sharing (up to 3, or **2-only** where Bed C is unused and the room is full at 2).
+- Floor layout (same on every floor), for example the 400 series:
 
-Defined in `src/data/buildingConfig.js` — UI calculates totals from this.
+```
+403          404
+402          405
+401          406
+Sofa space   407
+             408
+412          409
+411          410
+```
+
+- Room colors: green = monthly resident, blue = temporary stay. A mix is split (half green / half blue, or two green and one blue). An all-temporary room is fully blue.
+
+Defined in `src/data/buildingConfig.js` and `src/components/rooms/FloorRoomGrid.jsx`.
+
+---
+
+## Residents, payments, temporary stays
+
+- **Monthly residents** stay until deleted. Each month they appear again with that month’s rent **Pending**. Mark paid only in that month. A person whose joining date is in a future month (for example entered in late October to join in November) shows in the joining month, not earlier.
+- **Refund amount** is a number you type (use `0` if nothing is returned). It is not a Refundable / Non-refundable switch.
+- **Temporary residents** are few-day stays: name, phone, amount per day, joining date, number of days, and a free bed (single, double, or triple). They are not counted as monthly residents.
+- Dashboard: **Residents** (monthly only), **Temporary residents**, **Vacant beds** (ignores temporary stays), **Vacant beds (P+T)** (counts both).
+- Temporary countdown includes today: a 10-day stay shows **10 days left**, then **9 days left**, and **Vacate today** on the last day. Extra days can be added from the stay page.
+- Monthly payment summary does not mix temporary money. Unpaid temporary stays are listed separately. Payment filters **Paid (T)** and **Unpaid (T)** are only for temporary stays.
 
 ---
 
@@ -187,8 +214,10 @@ Expected conceptual endpoints:
 
 ---
 
-## Phase 1 scope
+## What is included
 
-Included: dashboard, residents, rooms (building → floor → room → bed), transfers, monthly payment recording (Cash / PhonePe), search, admin profile UI, mock data, service layer.
+Dashboard, login, monthly residents, temporary stays, rooms (building → floor → room → bed), transfers, monthly payment recording (Cash / UPI / Card), search, and admin profile.
 
-Not included: login/auth, Spring Boot, database, payment gateway, expenses, AI, daily/15-day stays.
+Not included: a payment gateway, expenses, or AI. Money is collected outside the app; the app only records it.
+
+Hosting notes are in `DEPLOY.md`. The live frontend is on Vercel. The API and database are on Render. A free Render Postgres database expires about 30 days after it is created.

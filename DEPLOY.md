@@ -26,6 +26,10 @@ You need **two** hosted pieces:
 7. Test: `https://YOUR-API.onrender.com/api/health` → `{"status":"ok"}`
 
 > Free Render websites **sleep** after ~15 minutes idle. First open can take 30–60 seconds.
+>
+> A **free Render Postgres database expires about 30 days after it is created**, then Render deletes it. To keep data, upgrade that database to a paid plan (about $6/month) before the grace period ends. A new free database on another account starts empty and expires again after 30 days.
+>
+> Oracle Cloud Always Free can host the API and Postgres without that 30-day expiry, but you run the server yourself. It does not copy an expired Render database.
 
 ---
 
