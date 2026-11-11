@@ -153,7 +153,7 @@ happy-nest-pg/
 | `/temporary/:id` | Temporary stay details, payment, extend days |
 | `/transfers` | Transfer history |
 | `/profile` | Admin profile UI |
-| `/assistant` | Ask questions about the saved PG data |
+The **AI Assistant** button stays at the bottom right of every page. It opens a side panel and streams the reply. If the records do not contain the answer, it says `Data is unavailable.`
 
 ---
 

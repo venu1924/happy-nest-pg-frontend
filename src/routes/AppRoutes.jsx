@@ -19,7 +19,6 @@ import Profile from '../pages/Profile';
 import AddTemporaryResident from '../pages/AddTemporaryResident';
 import TemporaryResidents from '../pages/TemporaryResidents';
 import TemporaryResidentDetails from '../pages/TemporaryResidentDetails';
-import Assistant from '../pages/Assistant';
 
 function ProtectedApp() {
   return (
@@ -49,7 +48,6 @@ export default function AppRoutes() {
         <Route path="rooms/:roomNumber" element={<RoomDetails />} />
         <Route path="transfers" element={<Transfers />} />
         <Route path="payments" element={<Payments />} />
-        <Route path="assistant" element={<Assistant />} />
         <Route path="temporary" element={<TemporaryResidents />} />
         <Route path="temporary/new" element={<AddTemporaryResident />} />
         <Route path="temporary/:id" element={<TemporaryResidentDetails />} />
