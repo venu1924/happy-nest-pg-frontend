@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { isValidPhone } from '../../utils/formatters';
 import {
   getRoomTypeLabel,
+  getVacantBeds,
   canOfferSingleSharing,
   canOfferTripleOnTwoBed,
   canChooseTripleMemberLimit,
