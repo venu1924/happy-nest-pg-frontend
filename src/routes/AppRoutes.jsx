@@ -19,6 +19,7 @@ import Profile from '../pages/Profile';
 import AddTemporaryResident from '../pages/AddTemporaryResident';
 import TemporaryResidents from '../pages/TemporaryResidents';
 import TemporaryResidentDetails from '../pages/TemporaryResidentDetails';
+import Notifications from '../pages/Notifications';
 
 function ProtectedApp() {
   return (
@@ -51,6 +52,7 @@ export default function AppRoutes() {
         <Route path="temporary" element={<TemporaryResidents />} />
         <Route path="temporary/new" element={<AddTemporaryResident />} />
         <Route path="temporary/:id" element={<TemporaryResidentDetails />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

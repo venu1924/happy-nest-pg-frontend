@@ -3,6 +3,7 @@ import { NavLink, Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import AdminProfileMenu from './AdminProfileMenu';
+import NotificationBell from './NotificationBell';
 
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', end: true },
@@ -62,7 +63,10 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <AdminProfileMenu />
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <AdminProfileMenu />
+        </div>
       </div>
 
       {menuOpen && (
