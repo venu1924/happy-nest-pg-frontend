@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/residents', label: 'Residents' },
   { to: '/rooms', label: 'Rooms' },
   { to: '/payments', label: 'Payments' },
+  { to: '/assistant', label: 'Assistant' },
   { to: '/temporary', label: 'Temporary' },
 ];
 

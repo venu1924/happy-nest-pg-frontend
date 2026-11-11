@@ -153,6 +153,7 @@ happy-nest-pg/
 | `/temporary/:id` | Temporary stay details, payment, extend days |
 | `/transfers` | Transfer history |
 | `/profile` | Admin profile UI |
+| `/assistant` | Ask questions about the saved PG data |
 
 ---
 
