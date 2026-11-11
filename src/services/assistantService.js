@@ -1,7 +1,7 @@
 import { API_BASE_URL } from './api';
 import { clearSession, getStoredToken } from './authStorage';
 
-export async function streamAssistant(question, onToken) {
+export async function streamAssistant(question, history, onToken) {
   const token = getStoredToken();
   const response = await fetch(`${API_BASE_URL}/assistant/ask`, {
     method: 'POST',
@@ -10,7 +10,7 @@ export async function streamAssistant(question, onToken) {
       Accept: 'text/event-stream',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, history }),
   });
 
   if (response.status === 401) {

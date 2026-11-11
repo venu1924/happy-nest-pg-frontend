@@ -3,9 +3,9 @@ import { Sparkles, X } from 'lucide-react';
 import { streamAssistant } from '../../services/assistantService';
 
 const EXAMPLES = [
+  'What are today\'s PG updates?',
   'Who has not paid this month rent?',
-  'How many vacant beds are there?',
-  'How many temporary residents are there?',
+  'Which rooms are vacant?',
 ];
 
 export default function AssistantDock() {
@@ -17,11 +17,15 @@ export default function AssistantDock() {
   const ask = async (text) => {
     const trimmed = text.trim();
     if (!trimmed || busy) return;
+    const history = messages
+      .filter((message) => message.text)
+      .slice(-6)
+      .map((message) => ({ role: message.role, text: message.text.slice(0, 400) }));
     setQuestion('');
     setMessages((prev) => [...prev, { role: 'you', text: trimmed }, { role: 'ai', text: '' }]);
     setBusy(true);
     try {
-      await streamAssistant(trimmed, (token) => {
+      await streamAssistant(trimmed, history, (token) => {
         setMessages((prev) => {
           const next = [...prev];
           const last = next[next.length - 1];
@@ -75,7 +79,7 @@ export default function AssistantDock() {
               {messages.length === 0 && (
                 <div className="space-y-3">
                   <p className="text-sm text-nest-muted">
-                    Ask anything saved in the app. If it is not in the records, the reply is “Data is unavailable.”
+                    Say hi, or ask for today’s PG updates. A specific fact that is not in the records gets “Data is unavailable.”
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {EXAMPLES.map((example) => (
