@@ -12,14 +12,15 @@ function daysUntilCheckout(checkoutDate) {
 
 /**
  * Remaining stay days, including today.
- * A 10-day booking shows "10 days left" on day 1, "9 days left" the next day, then "Vacate today" on the last day.
+ * A 10-day booking shows "10 days left" on day 1, "Vacate tomorrow" on the 10th day,
+ * then "Vacate today" on the following day.
  */
 export function stayCountdown(stay) {
   const untilLast =
     stay?.checkoutDate != null ? daysUntilCheckout(stay.checkoutDate) : Number(stay?.daysLeft);
   if (untilLast == null || Number.isNaN(untilLast)) return '';
-  if (untilLast < 0) return 'Stay ended — vacate';
-  if (untilLast === 0 || stay?.vacateToday) return 'Vacate today';
+  if (untilLast < 0 || stay?.vacateToday) return 'Vacate today';
+  if (untilLast === 0) return 'Vacate tomorrow';
   const left = untilLast + 1;
   return left === 1 ? '1 day left' : `${left} days left`;
 }
