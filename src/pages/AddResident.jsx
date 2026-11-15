@@ -10,7 +10,7 @@ import { createResident } from '../services/residentService';
 export default function AddResident() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { floors, loading, error, refresh } = useApp();
+  const { floors, residents, loading, error, refresh } = useApp();
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -62,9 +62,10 @@ export default function AddResident() {
         </p>
       )}
 
-      <ResidentForm
-        floors={floors}
-        initialValues={initialValues}
+        <ResidentForm
+          floors={floors}
+          residents={residents}
+          initialValues={initialValues}
         onSubmit={handleSubmit}
         busy={busy}
       />

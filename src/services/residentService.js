@@ -56,6 +56,11 @@ export async function updateResident(id, payload) {
   return data;
 }
 
+export async function planVacate(id, vacateDate) {
+  const { data } = await api.put(`/residents/${id}/vacate-plan`, { vacateDate });
+  return data;
+}
+
 export async function deleteResident(id, payload = {}) {
   if (USE_MOCK) {
     await mockDelay(250);

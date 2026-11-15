@@ -9,6 +9,7 @@ export default function BedCard({
   roomNumber,
   singleSharingTwoBed = false,
   tripleTwoMember = false,
+  nextBooking,
 }) {
   const occupied = bed.status === 'OCCUPIED';
   const blocked = bed.status === 'BLOCKED';
@@ -39,13 +40,17 @@ export default function BedCard({
       ) : occupied && resident ? (
         <Link
           to={`/residents/${resident.id}`}
-          className="mt-3 block rounded-xl bg-nest-soft px-3 py-3 transition hover:bg-slate-100"
+          className={`mt-3 block rounded-xl px-3 py-3 transition ${
+            resident.vacateDate ? 'bg-amber-50 hover:bg-amber-100' : 'bg-nest-soft hover:bg-slate-100'
+          }`}
         >
           <p className="text-sm font-medium text-nest-navy">{resident.name}</p>
           <p className="mt-0.5 text-xs text-nest-muted">
-            {singleSharingTwoBed
-              ? 'Both beds given for single sharing'
-              : 'View resident details'}
+            {resident.vacateDate
+              ? `Vacates ${resident.vacateDate}`
+              : singleSharingTwoBed
+                ? 'Both beds given for single sharing'
+                : 'View resident details'}
           </p>
         </Link>
       ) : blocked ? (
@@ -67,6 +72,11 @@ export default function BedCard({
             Assign Resident
           </Link>
         </div>
+      )}
+      {nextBooking && (
+        <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          Next month booking · {nextBooking.name} from {nextBooking.joiningDate}
+        </p>
       )}
     </div>
   );

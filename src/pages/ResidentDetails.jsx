@@ -5,7 +5,7 @@ import StatusBadge from '../components/common/StatusBadge';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import LoadingState from '../components/common/LoadingState';
 import ErrorState from '../components/common/ErrorState';
-import { getResidentById, deleteResident } from '../services/residentService';
+import { getResidentById, deleteResident, planVacate } from '../services/residentService';
 import { useApp } from '../context/AppContext';
 import { formatResidentBeds } from '../utils/roomUtils';
 import { getPayments } from '../services/paymentService';
@@ -29,6 +29,9 @@ export default function ResidentDetails() {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [deleteReason, setDeleteReason] = useState('');
+  const [vacateDate, setVacateDate] = useState('');
+  const [askingVacate, setAskingVacate] = useState(false);
+  const [savingVacate, setSavingVacate] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -41,6 +44,10 @@ export default function ResidentDetails() {
         return;
       }
       setResident(data);
+      const next = new Date();
+      next.setMonth(next.getMonth() + 2, 0);
+      const fallback = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+      setVacateDate(data.vacateDate || fallback);
       const { month, year } = getCurrentMonthYear();
       const payments = await getPayments({ month, year });
       setPayment(payments.find((p) => p.residentId === id) ?? null);
@@ -73,6 +80,20 @@ export default function ResidentDetails() {
     () => resident?.bedId?.split('-').pop() ?? '—',
     [resident]
   );
+
+  const saveVacate = async () => {
+    setSavingVacate(true);
+    setDeleteError('');
+    try {
+      const updated = await planVacate(resident.id, vacateDate || null);
+      setResident(updated);
+      setAskingVacate(false);
+    } catch (err) {
+      setDeleteError(err.message || 'Could not save the vacate date.');
+    } finally {
+      setSavingVacate(false);
+    }
+  };
 
   const openDeleteDialog = () => {
     setDeleteReason('');
@@ -173,6 +194,28 @@ export default function ResidentDetails() {
         </dl>
       </section>
 
+      {resident.vacateDate && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          Vacating on {resident.vacateDate}. The bed is yellow.
+          <button
+            type="button"
+            onClick={async () => {
+              setSavingVacate(true);
+              try {
+                const updated = await planVacate(resident.id, null);
+                setResident(updated);
+                setAskingVacate(false);
+              } finally {
+                setSavingVacate(false);
+              }
+            }}
+            className="ml-2 text-xs font-medium underline"
+          >
+            Clear vacate date
+          </button>
+        </p>
+      )}
+
       {deleteError && (
         <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
           {deleteError}
@@ -180,6 +223,13 @@ export default function ResidentDetails() {
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setAskingVacate(true)}
+          className="inline-flex min-h-12 items-center justify-center rounded-xl bg-amber-500 text-sm font-semibold text-white sm:col-span-2"
+        >
+          Vacate next month
+        </button>
         <Link
           to={`/residents/${resident.id}/edit`}
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-nest-line bg-white text-sm font-semibold text-nest-navy"
@@ -195,6 +245,33 @@ export default function ResidentDetails() {
           Transfer Room
         </Link>
       </div>
+
+      {askingVacate && (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <h2 className="text-sm font-semibold text-amber-950">Vacating date</h2>
+          <p className="mt-1 text-xs text-amber-900">
+            The bed turns yellow. The morning notice the day before, and on this date, includes the refund when it is more than 0.
+          </p>
+          <label className="mt-3 block text-xs font-medium text-amber-950" htmlFor="vacate-date">
+            Vacating date
+          </label>
+          <input
+            id="vacate-date"
+            type="date"
+            value={vacateDate}
+            onChange={(event) => setVacateDate(event.target.value)}
+            className="mt-1 min-h-11 w-full rounded-xl border border-amber-200 bg-white px-3 text-sm"
+          />
+          <button
+            type="button"
+            onClick={saveVacate}
+            disabled={savingVacate || !vacateDate}
+            className="mt-3 min-h-11 w-full rounded-xl bg-amber-500 px-4 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {savingVacate ? 'Saving...' : 'Save vacate date'}
+          </button>
+        </section>
+      )}
 
       <button
         type="button"

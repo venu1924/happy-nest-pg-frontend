@@ -105,12 +105,17 @@ export default function RoomDetails() {
         {room.beds.map((bed) => {
           const resident = residents.find((r) => r.id === bed.residentId);
           const temporary = (temporaryResidents || []).find((t) => t.id === bed.residentId);
+          const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
+          const nextBooking = residents.find(
+            (person) => person.bedId === bed.bedId && person.id !== bed.residentId && person.joiningDate > today
+          );
           return (
             <BedCard
               key={bed.bedId}
               bed={bed}
               resident={resident}
               temporary={temporary}
+              nextBooking={nextBooking}
               roomNumber={room.roomNumber}
               singleSharingTwoBed={singleSharingTwoBed}
               tripleTwoMember={isTripleTwoMemberRoom(room)}

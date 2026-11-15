@@ -71,6 +71,11 @@ export default function Dashboard() {
           value={stats.vacantBedsPT ?? stats.vacantBeds}
           hint="Monthly and temporary"
         />
+        <DashboardCard
+          label="Vacant beds (next month)"
+          value={stats.vacantBedsNextMonth ?? 0}
+          hint="Free next month, after bookings"
+        />
       </div>
 
       <PaymentSummary

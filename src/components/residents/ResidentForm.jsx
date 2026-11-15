@@ -15,6 +15,12 @@ import {
   TRIPLE_MEMBER_LIMIT_THREE,
 } from '../../data/buildingConfig';
 
+function calendarDate(date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 const emptyForm = {
   name: '',
   phone: '',
@@ -31,6 +37,7 @@ const emptyForm = {
 
 export default function ResidentForm({
   floors,
+  residents = [],
   initialValues,
   onSubmit,
   submitLabel = 'Add Resident',
@@ -92,6 +99,30 @@ export default function ResidentForm({
     return 'DOUBLE';
   }, [lockAssignment, initialValues, selectedRoom, showSharingChoice, offerSingle, offerTriple, form.sharingType]);
 
+  const joinsLater = useMemo(() => {
+    if (!form.joiningDate) return false;
+    const join = new Date(`${form.joiningDate}T00:00:00`);
+    const now = new Date();
+    return join.getFullYear() > now.getFullYear()
+      || (join.getFullYear() === now.getFullYear() && join.getMonth() > now.getMonth());
+  }, [form.joiningDate]);
+
+  const laterBedChoices = useMemo(() => {
+    if (!joinsLater || !selectedRoom) return [];
+    const join = new Date(`${form.joiningDate}T00:00:00`);
+    const joinMonthEnd = calendarDate(new Date(join.getFullYear(), join.getMonth() + 1, 0));
+    const today = calendarDate(new Date());
+    return (selectedRoom.beds || []).map((bed) => {
+      const holder = residents.find((person) => person.id === bed.residentId);
+      const booked = residents.find(
+        (person) => person.bedId === bed.bedId && person.joiningDate > today
+      );
+      const vacating = holder?.vacateDate && holder.vacateDate <= joinMonthEnd;
+      const free = bed.status !== 'OCCUPIED' || bed.occupantType === 'TEMPORARY' || vacating;
+      return { ...bed, holder, booked, vacating, selectable: free && !booked };
+    });
+  }, [joinsLater, selectedRoom, residents, form.joiningDate]);
+
   const vacantBeds = useMemo(
     () => (selectedRoom ? bedsForAssignment(selectedRoom, effectiveSharing) : []),
     [selectedRoom, effectiveSharing]
@@ -115,10 +146,10 @@ export default function ResidentForm({
       setForm((prev) => ({ ...prev, bedId: vacantBeds[0].bedId }));
       return;
     }
-    if (form.bedId && !vacantBeds.some((b) => b.bedId === form.bedId)) {
+    if (!lockAssignment && !joinsLater && form.bedId && !vacantBeds.some((b) => b.bedId === form.bedId)) {
       setForm((prev) => ({ ...prev, bedId: '' }));
     }
-  }, [vacantBeds, form.bedId, lockAssignment, effectiveSharing]);
+  }, [vacantBeds, form.bedId, lockAssignment, effectiveSharing, joinsLater]);
 
   const setField = (key, value) => {
     setErrors((prev) => ({ ...prev, [key]: undefined }));
@@ -157,10 +188,10 @@ export default function ResidentForm({
     if (!lockAssignment) {
       if (!form.roomNumber) next.roomNumber = 'Please select a room.';
       if (!form.bedId) next.bedId = 'Please select an available bed.';
-      if (selectedRoom && vacantBeds.length === 0) {
+      if (!joinsLater && selectedRoom && vacantBeds.length === 0) {
         next.bedId = 'This room has no vacant beds.';
       }
-      if (effectiveSharing === 'SINGLE' && selectedRoom && countOccupiedBeds(selectedRoom) > 0) {
+      if (!joinsLater && effectiveSharing === 'SINGLE' && selectedRoom && countOccupiedBeds(selectedRoom) > 0) {
         next.sharingType = 'Single sharing needs an empty 2-bed room.';
       }
     }
@@ -339,7 +370,38 @@ export default function ResidentForm({
             </Field>
           )}
 
-          {effectiveSharing === 'SINGLE' && selectedRoom?.type === 'TWO_BED' ? (
+          {joinsLater ? (
+            <Field label="Bed for next month" error={errors.bedId}>
+              <div className="grid gap-2">
+                {laterBedChoices.map((bed) => (
+                  <button
+                    key={bed.bedId}
+                    type="button"
+                    disabled={!bed.selectable}
+                    onClick={() => setField('bedId', bed.bedId)}
+                    className={`rounded-xl border px-3 py-3 text-left text-sm ${
+                      form.bedId === bed.bedId
+                        ? 'border-nest-navy bg-nest-navy text-white'
+                        : bed.vacating
+                          ? 'border-amber-300 bg-amber-50 text-nest-navy'
+                          : 'border-nest-line bg-white text-nest-navy'
+                    } disabled:opacity-60`}
+                  >
+                    <span className="font-semibold">Bed {bed.bedLabel}</span>
+                    <span className="mt-0.5 block text-xs">
+                      {bed.booked
+                        ? `Next month booking · ${bed.booked.name}`
+                        : bed.vacating
+                          ? `${bed.holder.name} vacates ${bed.holder.vacateDate}`
+                          : bed.status === 'OCCUPIED'
+                            ? 'Not free next month'
+                            : 'Vacant next month'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </Field>
+          ) : effectiveSharing === 'SINGLE' && selectedRoom?.type === 'TWO_BED' ? (
             <div className="rounded-xl border border-nest-line bg-nest-soft px-3 py-3 text-sm text-nest-navy">
               Beds: A and B (both assigned to this resident)
             </div>
