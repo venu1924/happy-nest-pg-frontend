@@ -95,7 +95,7 @@ export default function BedCard({
           }`}
         >
           <p className="text-xs font-semibold uppercase tracking-wide">
-            {occupied ? 'Next month · bed taken' : 'Next month · bed empty'}
+            {occupied ? 'Next month · bed taken' : 'Next month · bed booked'}
           </p>
           <p className="mt-1 text-sm font-medium text-nest-navy">{nextBooking.name}</p>
           <p className="mt-0.5 text-xs text-nest-muted">{formatPhone(nextBooking.phone)}</p>

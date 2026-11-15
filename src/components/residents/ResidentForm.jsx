@@ -99,6 +99,20 @@ export default function ResidentForm({
     return 'DOUBLE';
   }, [lockAssignment, initialValues, selectedRoom, showSharingChoice, offerSingle, offerTriple, form.sharingType]);
 
+  const bedsFreeNextMonth = (room) => {
+    if (!form.joiningDate) return 0;
+    const join = new Date(`${form.joiningDate}T00:00:00`);
+    const joinMonthEnd = calendarDate(new Date(join.getFullYear(), join.getMonth() + 1, 0));
+    const today = calendarDate(new Date());
+    return (room.beds || []).filter((bed) => {
+      const booked = residents.some((person) => person.bedId === bed.bedId && person.joiningDate > today);
+      if (booked) return false;
+      if (bed.status !== 'OCCUPIED' || bed.occupantType === 'TEMPORARY') return true;
+      const holder = residents.find((person) => person.id === bed.residentId);
+      return Boolean(holder?.vacateDate && holder.vacateDate <= joinMonthEnd);
+    }).length;
+  };
+
   const joinsLater = useMemo(() => {
     if (!form.joiningDate) return false;
     const join = new Date(`${form.joiningDate}T00:00:00`);
@@ -288,8 +302,10 @@ export default function ResidentForm({
               <option value="">Select room</option>
               {rooms.map((room) => {
                 const vacant = getVacantBeds(room).length;
-                const sharingHint =
-                  room.type === 'TWO_BED' && canOfferSingleSharing(room)
+                const freeNext = bedsFreeNextMonth(room);
+                const sharingHint = joinsLater
+                  ? (freeNext === 1 ? ' · 1 bed free next month' : freeNext > 1 ? ` · ${freeNext} beds free next month` : '')
+                  : room.type === 'TWO_BED' && canOfferSingleSharing(room)
                     ? ' · double or single'
                     : vacant === 1
                       ? ' · 1 bed vacant'
@@ -297,7 +313,7 @@ export default function ResidentForm({
                         ? ` · ${vacant} vacant`
                         : '';
                 return (
-                  <option key={room.roomNumber} value={room.roomNumber} disabled={vacant === 0}>
+                  <option key={room.roomNumber} value={room.roomNumber} disabled={joinsLater ? freeNext === 0 : vacant === 0}>
                     {room.roomNumber} · {getRoomTypeLabel(room)}{sharingHint}
                   </option>
                 );
@@ -383,8 +399,10 @@ export default function ResidentForm({
                       form.bedId === bed.bedId
                         ? 'border-nest-navy bg-nest-navy text-white'
                         : bed.vacating
-                          ? 'border-amber-300 bg-amber-50 text-nest-navy'
-                          : 'border-nest-line bg-white text-nest-navy'
+                          ? 'border-red-200 bg-red-100 text-nest-navy'
+                          : bed.occupantType === 'TEMPORARY'
+                            ? 'border-blue-200 bg-blue-50 text-nest-navy'
+                            : 'border-nest-line bg-white text-nest-navy'
                     } disabled:opacity-60`}
                   >
                     <span className="font-semibold">Bed {bed.bedLabel}</span>
@@ -393,9 +411,11 @@ export default function ResidentForm({
                         ? `Next month booking · ${bed.booked.name}`
                         : bed.vacating
                           ? `${bed.holder.name} vacates ${bed.holder.vacateDate}`
-                          : bed.status === 'OCCUPIED'
-                            ? 'Not free next month'
-                            : 'Vacant next month'}
+                          : bed.occupantType === 'TEMPORARY'
+                            ? 'Temporary stay · free next month'
+                            : bed.status === 'OCCUPIED'
+                              ? 'Not free next month'
+                              : 'Vacant next month'}
                     </span>
                   </button>
                 ))}

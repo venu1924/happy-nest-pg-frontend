@@ -55,7 +55,12 @@ export default function Dashboard() {
       </header>
 
       <div className="grid grid-cols-2 gap-3">
-        <DashboardCard label="Residents" value={stats.totalResidents} hint="Monthly stays only" />
+        <DashboardCard label="Residents" value={stats.totalResidents} hint="This month, not temporary" />
+        <DashboardCard
+          label="Residents (next month)"
+          value={stats.residentsNextMonth ?? 0}
+          hint="Continuing, plus joining, without people leaving"
+        />
         <DashboardCard
           label="Temporary residents"
           value={stats.temporaryResidents ?? 0}
