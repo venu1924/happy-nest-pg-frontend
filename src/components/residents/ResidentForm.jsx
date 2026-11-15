@@ -108,7 +108,8 @@ export default function ResidentForm({
       const booked = residents.some((person) => person.bedId === bed.bedId && person.joiningDate > today);
       if (booked) return false;
       if (bed.status !== 'OCCUPIED' || bed.occupantType === 'TEMPORARY') return true;
-      const holder = residents.find((person) => person.id === bed.residentId);
+      const holder = residents.find((person) => person.id === bed.residentId)
+        || residents.find((person) => person.bedId === bed.bedId && !(person.joiningDate > today));
       return Boolean(holder?.vacateDate && holder.vacateDate <= joinMonthEnd);
     }).length;
   };
@@ -127,7 +128,8 @@ export default function ResidentForm({
     const joinMonthEnd = calendarDate(new Date(join.getFullYear(), join.getMonth() + 1, 0));
     const today = calendarDate(new Date());
     return (selectedRoom.beds || []).map((bed) => {
-      const holder = residents.find((person) => person.id === bed.residentId);
+      const holder = residents.find((person) => person.id === bed.residentId)
+        || residents.find((person) => person.bedId === bed.bedId && !(person.joiningDate > today));
       const booked = residents.find(
         (person) => person.bedId === bed.bedId && person.joiningDate > today
       );
@@ -313,7 +315,7 @@ export default function ResidentForm({
                         ? ` · ${vacant} vacant`
                         : '';
                 return (
-                  <option key={room.roomNumber} value={room.roomNumber} disabled={joinsLater ? freeNext === 0 : vacant === 0}>
+                  <option key={room.roomNumber} value={room.roomNumber}>
                     {room.roomNumber} · {getRoomTypeLabel(room)}{sharingHint}
                   </option>
                 );
@@ -427,21 +429,31 @@ export default function ResidentForm({
             </div>
           ) : (
             <Field label="Available Bed" error={errors.bedId}>
-              <select
-                value={form.bedId}
-                onChange={(e) => setField('bedId', e.target.value)}
-                className={inputClass(errors.bedId)}
-                disabled={!selectedRoom}
-              >
-                <option value="">Select bed</option>
-                {vacantBeds.map((bed) => (
-                  <option key={bed.bedId} value={bed.bedId}>
-                    Bed {bed.bedLabel} · Vacant
-                  </option>
-                ))}
-              </select>
+              <div className="grid gap-2">
+                {(selectedRoom?.beds || []).map((bed) => {
+                  const vacant = vacantBeds.some((item) => item.bedId === bed.bedId);
+                  return (
+                    <button
+                      key={bed.bedId}
+                      type="button"
+                      disabled={!vacant}
+                      onClick={() => setField('bedId', bed.bedId)}
+                      className={`rounded-xl border px-3 py-3 text-left text-sm ${
+                        form.bedId === bed.bedId
+                          ? 'border-nest-navy bg-nest-navy text-white'
+                          : 'border-nest-line bg-white text-nest-navy'
+                      } disabled:opacity-60`}
+                    >
+                      <span className="font-semibold">Bed {bed.bedLabel}</span>
+                      <span className="mt-0.5 block text-xs">
+                        {vacant ? 'Vacant' : bed.occupantType === 'TEMPORARY' ? 'Temporary stay' : 'Occupied'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
               {selectedRoom && vacantBeds.length === 0 && (
-                <p className="mt-1 text-xs text-nest-amber">No vacant beds in this room.</p>
+                <p className="mt-1 text-xs text-nest-amber">No vacant beds in this room for this month. Use a joining date next month for a bed that is vacating or temporary.</p>
               )}
             </Field>
           )}
