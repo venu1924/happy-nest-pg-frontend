@@ -41,7 +41,7 @@ export default function BedCard({
         <Link
           to={`/residents/${resident.id}`}
           className={`mt-3 block rounded-xl px-3 py-3 transition ${
-            resident.vacateDate ? 'bg-amber-50 hover:bg-amber-100' : 'bg-nest-soft hover:bg-slate-100'
+            resident.vacateDate ? 'bg-red-100 hover:bg-red-200' : 'bg-nest-soft hover:bg-slate-100'
           }`}
         >
           <p className="text-sm font-medium text-nest-navy">{resident.name}</p>
@@ -74,7 +74,7 @@ export default function BedCard({
         </div>
       )}
       {nextBooking && (
-        <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p className={`mt-2 rounded-xl px-3 py-2 text-xs ${occupied ? 'bg-pink-100 text-pink-950' : 'bg-yellow-100 text-yellow-950'}`}>
           Next month booking · {nextBooking.name} from {nextBooking.joiningDate}
         </p>
       )}

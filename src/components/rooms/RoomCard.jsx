@@ -8,8 +8,9 @@ import {
   getRoomStatus,
   getRoomStatusLabel,
   getRoomTypeLabel,
+  bedIsVacating,
+  nextBookingForBed,
   roomHasTemporary,
-  roomHasVacating,
   roomStatusClasses,
   roomStayGradient,
 } from '../../utils/roomUtils';
@@ -22,20 +23,34 @@ export default function RoomCard({ room }) {
   const styles = roomStatusClasses(status);
   const vacant = countVacantBeds(room);
   const capacity = getAssignableCapacity(room);
-  const vacatingIds = useMemo(
-    () => new Set((residents || []).filter((person) => person.vacateDate).map((person) => person.id)),
-    [residents]
-  );
-  const gradient = roomStayGradient(room, vacatingIds);
+  const layoutTone = useMemo(() => {
+    const vacatingIds = new Set((residents || []).filter((person) => person.vacateDate).map((person) => person.id));
+    let tone = null;
+    for (const bed of room.beds || []) {
+      const booking = nextBookingForBed(bed, residents);
+      if (booking && bed.status === 'OCCUPIED') return 'pink';
+      if (booking) tone = tone || 'yellow';
+      else if (bedIsVacating(bed, vacatingIds)) tone = tone || 'red';
+    }
+    return tone;
+  }, [room, residents]);
+  const gradient = roomStayGradient(room, residents);
   const hasTemp = roomHasTemporary(room);
-  const hasVacating = roomHasVacating(room, vacatingIds);
 
   return (
     <button
       type="button"
       onClick={() => navigate(`/rooms/${room.roomNumber}`)}
       className={`w-full rounded-xl border p-3 text-left transition active:scale-[0.99] ${
-        gradient ? (hasVacating ? 'border-yellow-400' : 'border-blue-300') : styles.card
+        gradient
+          ? layoutTone === 'pink'
+            ? 'border-pink-300'
+            : layoutTone === 'yellow'
+              ? 'border-yellow-400'
+              : layoutTone === 'red'
+                ? 'border-red-300'
+                : 'border-blue-300'
+          : styles.card
       }`}
       style={gradient ? { background: gradient } : undefined}
     >
@@ -48,10 +63,24 @@ export default function RoomCard({ room }) {
         </div>
         <span
           className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-            hasVacating ? 'bg-yellow-400 text-nest-navy' : hasTemp ? 'bg-blue-600 text-white' : styles.badge
+            layoutTone === 'pink'
+              ? 'bg-pink-300 text-nest-navy'
+              : layoutTone === 'yellow'
+                ? 'bg-yellow-400 text-nest-navy'
+                : layoutTone === 'red'
+                  ? 'bg-red-300 text-nest-navy'
+                  : hasTemp
+                    ? 'bg-blue-600 text-white'
+                    : styles.badge
           }`}
         >
-          {hasVacating ? 'Vacating' : hasTemp ? 'Temporary' : getRoomStatusLabel(status)}
+          {layoutTone === 'pink' || layoutTone === 'yellow'
+            ? 'Next month'
+            : layoutTone === 'red'
+              ? 'Vacating'
+              : hasTemp
+                ? 'Temporary'
+                : getRoomStatusLabel(status)}
         </span>
       </div>
       <p className="mt-3 text-sm font-medium tabular-nums text-nest-navy">

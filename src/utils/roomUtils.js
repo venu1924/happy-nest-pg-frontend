@@ -168,21 +168,43 @@ export function roomHasVacating(room, vacatingIds) {
   return (room?.beds ?? []).some((bed) => bedIsVacating(bed, vacatingIds));
 }
 
+/** Joining date is in a later calendar month than today. */
+export function isNextMonthBooking(person, today = new Date()) {
+  if (!person?.joiningDate) return false;
+  const [year, month] = person.joiningDate.split('-').map(Number);
+  return year > today.getFullYear() || (year === today.getFullYear() && month > today.getMonth() + 1);
+}
+
+export function nextBookingForBed(bed, residents) {
+  return (residents || []).find(
+    (person) => person.bedId === bed?.bedId && isNextMonthBooking(person)
+  );
+}
+
 /**
- * Equal color slices when a room has a temporary stay or someone leaving.
- * Green = monthly, blue = temporary, yellow = vacating, slate = vacant.
+ * Bed slices when a room has a temporary stay, someone leaving, or a next-month booking.
+ * Green = monthly, blue = temporary, light red = vacating,
+ * pink = next month on a taken bed, yellow = next month on an empty bed, slate = vacant.
  */
-export function roomStayGradient(room, vacatingIds) {
+export function roomStayGradient(room, residents) {
+  const vacatingIds = new Set(
+    (residents || []).filter((person) => person.vacateDate).map((person) => person.id)
+  );
   const beds = (room?.beds ?? []).filter((b) => b.status !== 'BLOCKED');
   if (beds.length === 0) return null;
   const showSlices = beds.some(
-    (bed) => bed.occupantType === 'TEMPORARY' || bedIsVacating(bed, vacatingIds)
+    (bed) => bed.occupantType === 'TEMPORARY'
+      || bedIsVacating(bed, vacatingIds)
+      || nextBookingForBed(bed, residents)
   );
   if (!showSlices) return null;
   const color = (bed) => {
+    const booking = nextBookingForBed(bed, residents);
+    if (booking && bed.status === 'OCCUPIED') return '#f9a8d4';
+    if (booking) return '#facc15';
     if (bed.status !== 'OCCUPIED') return '#e2e8f0';
     if (bed.occupantType === 'TEMPORARY') return '#2563eb';
-    if (bedIsVacating(bed, vacatingIds)) return '#facc15';
+    if (bedIsVacating(bed, vacatingIds)) return '#fca5a5';
     return '#059669';
   };
   const stops = beds

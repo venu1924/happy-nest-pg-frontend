@@ -20,6 +20,7 @@ import AddTemporaryResident from '../pages/AddTemporaryResident';
 import TemporaryResidents from '../pages/TemporaryResidents';
 import TemporaryResidentDetails from '../pages/TemporaryResidentDetails';
 import Notifications from '../pages/Notifications';
+import NextMonthBookings from '../pages/NextMonthBookings';
 
 function ProtectedApp() {
   return (
@@ -45,6 +46,7 @@ export default function AppRoutes() {
         <Route path="residents/:id/edit" element={<EditResident />} />
         <Route path="residents/:id/transfer" element={<TransferResident />} />
         <Route path="rooms" element={<Rooms />} />
+        <Route path="next-month" element={<NextMonthBookings />} />
         <Route path="rooms/floor/:floorNumber" element={<FloorView />} />
         <Route path="rooms/:roomNumber" element={<RoomDetails />} />
         <Route path="transfers" element={<Transfers />} />

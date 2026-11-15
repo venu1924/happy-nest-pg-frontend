@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FloorBlock from './FloorBlock';
 import { useApp } from '../../context/AppContext';
@@ -11,10 +11,6 @@ import { summarizeFloor } from '../../utils/roomUtils';
 export default function BuildingView({ floorSummaries }) {
   const navigate = useNavigate();
   const { residents } = useApp();
-  const vacatingIds = useMemo(
-    () => new Set((residents || []).filter((person) => person.vacateDate).map((person) => person.id)),
-    [residents]
-  );
   const [selected, setSelected] = useState(null);
   const [animating, setAnimating] = useState(false);
 
@@ -53,7 +49,7 @@ export default function BuildingView({ floorSummaries }) {
                 totalRooms={summary.totalRooms}
                 selected={selected === floor.floorNumber}
                 fading={animating && selected !== floor.floorNumber}
-                vacatingIds={vacatingIds}
+                people={residents}
                 onSelect={handleSelect}
               />
             );
@@ -82,7 +78,13 @@ export default function BuildingView({ floorSummaries }) {
           <span className="h-2.5 w-2.5 rounded-sm bg-blue-600" /> Temporary stay
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-yellow-400" /> Vacating next month
+          <span className="h-2.5 w-2.5 rounded-sm bg-red-300" /> Vacating
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm bg-pink-300" /> Next month, bed taken
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm bg-yellow-400" /> Next month, bed empty
         </span>
       </div>
     </div>

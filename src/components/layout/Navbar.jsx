@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/residents', label: 'Residents' },
   { to: '/rooms', label: 'Rooms' },
+  { to: '/next-month', label: 'Next month Bookings' },
   { to: '/payments', label: 'Payments' },
   { to: '/temporary', label: 'Temporary' },
 ];

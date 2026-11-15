@@ -1,4 +1,4 @@
-import { getRoomStatus, roomHasTemporary, roomHasVacating, roomStatusClasses } from '../../utils/roomUtils';
+import { getRoomStatus, roomStatusClasses, roomStayGradient } from '../../utils/roomUtils';
 import { formatFloorSeriesLabel, formatRoomRangeForFloor } from '../../data/buildingConfig';
 
 /**
@@ -13,7 +13,7 @@ export default function FloorBlock({
   selected,
   fading,
   onSelect,
-  vacatingIds,
+  people = [],
 }) {
   const statusDots = rooms.map((room) => getRoomStatus(room));
 
@@ -45,19 +45,17 @@ export default function FloorBlock({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1" aria-hidden>
-        {statusDots.map((status, idx) => (
-          <span
-            key={`${floorNumber}-${idx}`}
-            className={`h-2 w-2 rounded-sm ${
-              roomHasVacating(rooms[idx], vacatingIds)
-                ? 'bg-yellow-400'
-                : roomHasTemporary(rooms[idx])
-                  ? 'bg-blue-600'
-                  : roomStatusClasses(status).dot
-            }`}
-            title={status}
-          />
-        ))}
+        {statusDots.map((status, idx) => {
+          const gradient = roomStayGradient(rooms[idx], people);
+          return (
+            <span
+              key={`${floorNumber}-${idx}`}
+              className={`h-2.5 rounded-sm ${gradient ? 'w-4' : `w-2.5 ${roomStatusClasses(status).dot}`}`}
+              style={gradient ? { background: gradient } : undefined}
+              title={status}
+            />
+          );
+        })}
       </div>
     </button>
   );
