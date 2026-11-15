@@ -1,4 +1,4 @@
-import { getRoomStatus, roomHasTemporary, roomStatusClasses } from '../../utils/roomUtils';
+import { getRoomStatus, roomHasTemporary, roomHasVacating, roomStatusClasses } from '../../utils/roomUtils';
 import { formatFloorSeriesLabel, formatRoomRangeForFloor } from '../../data/buildingConfig';
 
 /**
@@ -13,6 +13,7 @@ export default function FloorBlock({
   selected,
   fading,
   onSelect,
+  vacatingIds,
 }) {
   const statusDots = rooms.map((room) => getRoomStatus(room));
 
@@ -48,7 +49,11 @@ export default function FloorBlock({
           <span
             key={`${floorNumber}-${idx}`}
             className={`h-2 w-2 rounded-sm ${
-              roomHasTemporary(rooms[idx]) ? 'bg-blue-600' : roomStatusClasses(status).dot
+              roomHasVacating(rooms[idx], vacatingIds)
+                ? 'bg-yellow-400'
+                : roomHasTemporary(rooms[idx])
+                  ? 'bg-blue-600'
+                  : roomStatusClasses(status).dot
             }`}
             title={status}
           />

@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 import {
   countRoomResidents,
   countVacantBeds,
@@ -7,26 +9,33 @@ import {
   getRoomStatusLabel,
   getRoomTypeLabel,
   roomHasTemporary,
+  roomHasVacating,
   roomStatusClasses,
   roomStayGradient,
 } from '../../utils/roomUtils';
 
 export default function RoomCard({ room }) {
   const navigate = useNavigate();
+  const { residents } = useApp();
   const occupied = countRoomResidents(room);
   const status = getRoomStatus(room);
   const styles = roomStatusClasses(status);
   const vacant = countVacantBeds(room);
   const capacity = getAssignableCapacity(room);
-  const gradient = roomStayGradient(room);
+  const vacatingIds = useMemo(
+    () => new Set((residents || []).filter((person) => person.vacateDate).map((person) => person.id)),
+    [residents]
+  );
+  const gradient = roomStayGradient(room, vacatingIds);
   const hasTemp = roomHasTemporary(room);
+  const hasVacating = roomHasVacating(room, vacatingIds);
 
   return (
     <button
       type="button"
       onClick={() => navigate(`/rooms/${room.roomNumber}`)}
       className={`w-full rounded-xl border p-3 text-left transition active:scale-[0.99] ${
-        gradient ? 'border-blue-300' : styles.card
+        gradient ? (hasVacating ? 'border-yellow-400' : 'border-blue-300') : styles.card
       }`}
       style={gradient ? { background: gradient } : undefined}
     >
@@ -39,10 +48,10 @@ export default function RoomCard({ room }) {
         </div>
         <span
           className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-            hasTemp ? 'bg-blue-600 text-white' : styles.badge
+            hasVacating ? 'bg-yellow-400 text-nest-navy' : hasTemp ? 'bg-blue-600 text-white' : styles.badge
           }`}
         >
-          {hasTemp ? 'Temporary' : getRoomStatusLabel(status)}
+          {hasVacating ? 'Vacating' : hasTemp ? 'Temporary' : getRoomStatusLabel(status)}
         </span>
       </div>
       <p className="mt-3 text-sm font-medium tabular-nums text-nest-navy">

@@ -160,17 +160,30 @@ export function roomHasTemporary(room) {
   return countBedsByOccupant(room, 'TEMPORARY') > 0;
 }
 
+export function bedIsVacating(bed, vacatingIds) {
+  return Boolean(bed?.residentId && vacatingIds?.has(bed.residentId));
+}
+
+export function roomHasVacating(room, vacatingIds) {
+  return (room?.beds ?? []).some((bed) => bedIsVacating(bed, vacatingIds));
+}
+
 /**
- * Equal color slices for occupied/vacant beds when a temporary stay is in the room.
- * Green = monthly, blue = temporary, slate = vacant.
+ * Equal color slices when a room has a temporary stay or someone leaving.
+ * Green = monthly, blue = temporary, yellow = vacating, slate = vacant.
  */
-export function roomStayGradient(room) {
-  if (!roomHasTemporary(room)) return null;
-  const beds = (room.beds ?? []).filter((b) => b.status !== 'BLOCKED');
+export function roomStayGradient(room, vacatingIds) {
+  const beds = (room?.beds ?? []).filter((b) => b.status !== 'BLOCKED');
   if (beds.length === 0) return null;
+  const showSlices = beds.some(
+    (bed) => bed.occupantType === 'TEMPORARY' || bedIsVacating(bed, vacatingIds)
+  );
+  if (!showSlices) return null;
   const color = (bed) => {
     if (bed.status !== 'OCCUPIED') return '#e2e8f0';
-    return bed.occupantType === 'TEMPORARY' ? '#2563eb' : '#059669';
+    if (bed.occupantType === 'TEMPORARY') return '#2563eb';
+    if (bedIsVacating(bed, vacatingIds)) return '#facc15';
+    return '#059669';
   };
   const stops = beds
     .map((bed, i) => {
