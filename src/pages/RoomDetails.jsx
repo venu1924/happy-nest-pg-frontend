@@ -102,7 +102,10 @@ export default function RoomDetails() {
       </header>
 
       <section className="space-y-3">
-        <h2 className="font-display text-base font-semibold text-nest-navy">Beds</h2>
+        <h2 className="font-display text-base font-semibold text-nest-navy">Who is here</h2>
+        <p className="text-sm text-nest-muted">
+          Each bed shows who is staying now, then who is booked for next month, in the same colors as the floor.
+        </p>
         {room.beds.map((bed) => {
           const resident = residents.find((r) => r.id === bed.residentId);
           const temporary = (temporaryResidents || []).find((t) => t.id === bed.residentId);
