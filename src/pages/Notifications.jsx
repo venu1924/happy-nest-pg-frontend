@@ -11,7 +11,7 @@ import {
 export default function Notifications() {
   const [items, setItems] = useState([]);
   const [publicKey, setPublicKey] = useState('');
-  const [morningTime, setMorningTime] = useState('8:00 AM');
+  const [morningTime, setMorningTime] = useState('9:00 AM and 7:00 PM');
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -30,7 +30,7 @@ export default function Notifications() {
     setStatus('');
     try {
       await enablePhoneAlerts(publicKey);
-      setStatus('Phone alerts are on. Morning updates will arrive on this phone.');
+      setStatus('Phone alerts are on. They arrive at 9:00 AM and 7:00 PM even when the app is closed.');
     } catch (err) {
       setStatus(err.message || 'Could not turn on phone alerts.');
     } finally {
@@ -61,7 +61,7 @@ export default function Notifications() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-nest-navy">Notifications</h1>
           <p className="mt-1 text-sm text-nest-muted">
-            Morning updates at {morningTime}. Rent reminders start on the 6th. Milestones show once, when they happen.
+            Phone alerts at {morningTime}, even when this app is closed. Rent reminders start on the 6th. Milestones show once, when they happen.
           </p>
         </div>
         {items.some((item) => !item.read) && (
