@@ -134,6 +134,23 @@ export function canOfferTripleOnTwoBed(room) {
   return countOccupiedBeds(room) < 3;
 }
 
+/** Existing beds, plus Bed C when this double room is being assigned as triple sharing. */
+export function bedsForSharingView(room, sharingType) {
+  const beds = [...(room?.beds ?? [])];
+  if (
+    sharingType === 'TRIPLE' &&
+    room?.type === 'TWO_BED' &&
+    !beds.some((bed) => bed.bedLabel === 'C')
+  ) {
+    beds.push({
+      bedId: `${room.roomNumber}-C`,
+      bedLabel: 'C',
+      status: 'VACANT',
+    });
+  }
+  return beds;
+}
+
 /** Vacant beds, plus Bed C when a 2-bed room is being used as triple and C is not created yet. */
 export function bedsForAssignment(room, sharingType) {
   const vacant = getVacantBeds(room);

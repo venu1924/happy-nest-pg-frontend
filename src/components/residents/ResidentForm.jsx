@@ -8,6 +8,7 @@ import {
   canChooseTripleMemberLimit,
   countOccupiedBeds,
   bedsForAssignment,
+  bedsForSharingView,
 } from '../../utils/roomUtils';
 import {
   defaultRentForAssignment,
@@ -127,7 +128,7 @@ export default function ResidentForm({
     const join = new Date(`${form.joiningDate}T00:00:00`);
     const joinMonthEnd = calendarDate(new Date(join.getFullYear(), join.getMonth() + 1, 0));
     const today = calendarDate(new Date());
-    return (selectedRoom.beds || []).map((bed) => {
+    return bedsForSharingView(selectedRoom, effectiveSharing).map((bed) => {
       const holder = residents.find((person) => person.id === bed.residentId)
         || residents.find((person) => person.bedId === bed.bedId && !(person.joiningDate > today));
       const booked = residents.find(
@@ -137,7 +138,7 @@ export default function ResidentForm({
       const free = bed.status !== 'OCCUPIED' || bed.occupantType === 'TEMPORARY' || vacating;
       return { ...bed, holder, booked, vacating, selectable: free && !booked };
     });
-  }, [joinsLater, selectedRoom, residents, form.joiningDate]);
+  }, [joinsLater, selectedRoom, residents, form.joiningDate, effectiveSharing]);
 
   const vacantBeds = useMemo(
     () => (selectedRoom ? bedsForAssignment(selectedRoom, effectiveSharing) : []),
@@ -308,7 +309,9 @@ export default function ResidentForm({
                 const sharingHint = joinsLater
                   ? (freeNext === 1 ? ' · 1 bed free next month' : freeNext > 1 ? ` · ${freeNext} beds free next month` : '')
                   : room.type === 'TWO_BED' && canOfferSingleSharing(room)
-                    ? ' · double or single'
+                    ? ' · double, triple, or single'
+                    : room.type === 'TWO_BED' && room.occupancyMode !== 'SINGLE' && room.occupancyMode !== 'TRIPLE'
+                      ? ' · can be 3 sharing'
                     : vacant === 1
                       ? ' · 1 bed vacant'
                       : vacant > 0
@@ -430,7 +433,7 @@ export default function ResidentForm({
           ) : (
             <Field label="Available Bed" error={errors.bedId}>
               <div className="grid gap-2">
-                {(selectedRoom?.beds || []).map((bed) => {
+                {bedsForSharingView(selectedRoom, effectiveSharing).map((bed) => {
                   const vacant = vacantBeds.some((item) => item.bedId === bed.bedId);
                   return (
                     <button
